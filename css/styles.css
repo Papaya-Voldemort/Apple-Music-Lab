@@ -1,0 +1,564 @@
+/* Apple Music Lab Styles */
+:root {
+    /* Light Mode Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f7;
+    --bg-tertiary: #fbfbfd;
+    --text-primary: #1d1d1f;
+    --text-secondary: #86868b;
+    --accent-blue: #007aff;
+    --accent-blue-hover: #0056cc;
+    --border-color: #d2d2d7;
+    --shadow-light: rgba(0, 0, 0, 0.04);
+    --shadow-medium: rgba(0, 0, 0, 0.08);
+    --shadow-heavy: rgba(0, 0, 0, 0.12);
+    
+    /* Grid Colors */
+    --grid-line: #e5e5e7;
+    --grid-cell-active: #007aff;
+    --grid-cell-hover: rgba(0, 122, 255, 0.1);
+    
+    /* Instrument Colors */
+    --instrument-piano: #ff3b30;
+    --instrument-drums: #ff9500;
+    --instrument-bass: #ffcc02;
+    --instrument-synth: #34c759;
+    --instrument-guitar: #007aff;
+    --instrument-strings: #5856d6;
+    --instrument-brass: #af52de;
+    --instrument-percussion: #ff2d92;
+}
+
+[data-theme="dark"] {
+    /* Dark Mode Colors */
+    --bg-primary: #000000;
+    --bg-secondary: #1c1c1e;
+    --bg-tertiary: #2c2c2e;
+    --text-primary: #ffffff;
+    --text-secondary: #8e8e93;
+    --accent-blue: #0a84ff;
+    --accent-blue-hover: #409cff;
+    --border-color: #38383a;
+    --shadow-light: rgba(255, 255, 255, 0.04);
+    --shadow-medium: rgba(255, 255, 255, 0.08);
+    --shadow-heavy: rgba(255, 255, 255, 0.12);
+    
+    /* Grid Colors */
+    --grid-line: #48484a;
+    --grid-cell-active: #0a84ff;
+    --grid-cell-hover: rgba(10, 132, 255, 0.2);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    overflow-x: hidden;
+}
+
+.app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styles */
+.header {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .header {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    font-size: 20px;
+}
+
+.apple-icon {
+    width: 28px;
+    height: 28px;
+    fill: var(--text-primary);
+}
+
+.header-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Button Styles */
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    outline: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.btn:hover::before {
+    opacity: 1;
+}
+
+.btn-primary {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--accent-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0, 122, 255, 0.3);
+}
+
+.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-secondary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px var(--shadow-medium);
+}
+
+.btn-play {
+    background: #34c759;
+    color: white;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    justify-content: center;
+}
+
+.btn-play:hover {
+    background: #28a745;
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(52, 199, 89, 0.3);
+}
+
+.icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Main Content */
+.main {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    width: 100%;
+}
+
+/* Controls Panel */
+.controls-panel {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 24px;
+    align-items: center;
+    box-shadow: 0 4px 20px var(--shadow-light);
+    border: 1px solid var(--border-color);
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-group label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.tempo-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.playback-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Sequencer Grid */
+.sequencer-container {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px var(--shadow-light);
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+}
+
+.sequencer-layout {
+    display: flex;
+    min-width: 1000px;
+    gap: 16px;
+}
+
+.instrument-labels {
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.grid-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.timeline {
+    display: grid;
+    grid-template-columns: repeat(32, 1fr);
+    gap: 2px;
+    margin-bottom: 12px;
+    height: 24px;
+}
+
+.timeline-marker {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 4px 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-marker.beat {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.timeline-marker.active {
+    background: var(--accent-blue);
+    color: white;
+    border-radius: 4px;
+}
+
+.sequencer-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.instrument-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 36px; /* Account for timeline height */
+}
+
+.instrument-label {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.grid-row {
+    display: grid;
+    grid-template-columns: repeat(32, 1fr);
+    gap: 2px;
+    height: 40px;
+}
+
+.grid-cell {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--grid-line);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    min-width: 24px;
+}
+
+.grid-cell:hover {
+    background: var(--grid-cell-hover);
+    transform: scale(1.05);
+}
+
+.grid-cell.active {
+    background: var(--grid-cell-active);
+    border-color: var(--grid-cell-active);
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.grid-cell.playing {
+    animation: pulse 0.3s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); box-shadow: 0 4px 16px rgba(0, 122, 255, 0.5); }
+    100% { transform: scale(1); }
+}
+
+/* Instrument Panel */
+.instrument-panel {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px var(--shadow-light);
+    border: 1px solid var(--border-color);
+}
+
+.instrument-panel h3 {
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.instrument-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.instrument-btn {
+    padding: 16px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.instrument-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.instrument-btn:hover::before {
+    opacity: 1;
+}
+
+.instrument-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--shadow-medium);
+}
+
+.instrument-btn.selected {
+    border-color: var(--accent-blue);
+    background: rgba(0, 122, 255, 0.1);
+}
+
+.instrument-btn.piano { background: linear-gradient(135deg, var(--instrument-piano), rgba(255, 59, 48, 0.8)); }
+.instrument-btn.drums { background: linear-gradient(135deg, var(--instrument-drums), rgba(255, 149, 0, 0.8)); }
+.instrument-btn.bass { background: linear-gradient(135deg, var(--instrument-bass), rgba(255, 204, 2, 0.8)); }
+.instrument-btn.synth { background: linear-gradient(135deg, var(--instrument-synth), rgba(52, 199, 89, 0.8)); }
+.instrument-btn.guitar { background: linear-gradient(135deg, var(--instrument-guitar), rgba(0, 122, 255, 0.8)); }
+.instrument-btn.strings { background: linear-gradient(135deg, var(--instrument-strings), rgba(88, 86, 214, 0.8)); }
+.instrument-btn.brass { background: linear-gradient(135deg, var(--instrument-brass), rgba(175, 82, 222, 0.8)); }
+.instrument-btn.percussion { background: linear-gradient(135deg, var(--instrument-percussion), rgba(255, 45, 146, 0.8)); }
+
+.instrument-btn.piano,
+.instrument-btn.drums,
+.instrument-btn.bass,
+.instrument-btn.synth,
+.instrument-btn.guitar,
+.instrument-btn.strings,
+.instrument-btn.brass,
+.instrument-btn.percussion {
+    color: white;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-content {
+        padding: 12px 16px;
+    }
+    
+    .main {
+        padding: 16px;
+    }
+    
+    .controls-panel {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .playback-controls {
+        justify-content: center;
+    }
+    
+    .sequencer-container {
+        padding: 16px;
+    }
+    
+    .sequencer-layout {
+        min-width: 900px;
+    }
+    
+    .instrument-labels {
+        width: 100px;
+    }
+    
+    .instrument-label {
+        padding: 0 8px;
+        font-size: 12px;
+    }
+    
+    .instrument-list {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo span {
+        display: none;
+    }
+    
+    .btn {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    
+    .btn span {
+        display: none;
+    }
+    
+    .sequencer-layout {
+        min-width: 800px;
+    }
+    
+    .instrument-labels {
+        width: 80px;
+    }
+    
+    .instrument-label {
+        padding: 0 6px;
+        font-size: 11px;
+    }
+    
+    .grid-cell {
+        min-width: 20px;
+    }
+}
+
+/* Smooth animations */
+* {
+    scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+.btn:focus-visible,
+.slider:focus-visible,
+.grid-cell:focus-visible,
+.instrument-btn:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
