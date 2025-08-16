@@ -206,6 +206,7 @@ class AudioEngine {
         
         this.isPlaying = true;
         this.currentStep = 0;
+        this.totalSteps = steps;
         this.nextNoteTime = this.audioContext.currentTime;
         
         this.scheduler(sequence, steps);
@@ -247,15 +248,15 @@ class AudioEngine {
     nextNote() {
         const secondsPerBeat = 60.0 / this.tempo;
         this.nextNoteTime += secondsPerBeat / 4; // 16th notes
-        this.currentStep = (this.currentStep + 1) % 32;
+        this.currentStep = (this.currentStep + 1) % (this.totalSteps || 32);
     }
     
     // Export sequence as MIDI-like data
-    exportSequence(sequence) {
+    exportSequence(sequence, totalSteps = 32) {
         const export_data = {
             tempo: this.tempo,
             instruments: {},
-            totalSteps: 32
+            totalSteps: totalSteps
         };
         
         Object.keys(sequence).forEach(instrument => {
@@ -285,10 +286,8 @@ class AudioEngine {
     }
     
     // Generate audio buffer for download
-    async generateAudioBuffer(sequence, duration = null) {
-        if (!duration) {
-            duration = (32 * 60 / this.tempo / 4) + 1; // Full sequence + 1 second
-        }
+    async generateAudioBuffer(sequence, totalSteps = 32) {
+        const duration = (totalSteps * 60 / this.tempo / 4) + 1; // Full sequence + 1 second
         
         const offlineContext = new OfflineAudioContext(2, duration * this.audioContext.sampleRate, this.audioContext.sampleRate);
         const masterGain = offlineContext.createGain();
@@ -299,10 +298,10 @@ class AudioEngine {
         let currentTime = 0;
         const stepDuration = 60 / this.tempo / 4;
         
-        for (let step = 0; step < 32; step++) {
+        for (let step = 0; step < totalSteps; step++) {
             Object.keys(sequence).forEach(instrument => {
                 sequence[instrument].forEach((row, rowIndex) => {
-                    if (row[step]) {
+                    if (row && row[step]) {
                         this.playNoteOffline(offlineContext, masterGain, instrument, rowIndex, stepDuration, currentTime);
                     }
                 });

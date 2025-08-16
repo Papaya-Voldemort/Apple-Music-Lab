@@ -5,18 +5,19 @@ class AppleMusicLab {
         this.currentInstrument = 'piano';
         this.sequence = {};
         this.steps = 32;
+        this.bars = 8;
         this.isPlaying = false;
         
-        // Initialize instruments
+        // Initialize instruments with enabled state
         this.instruments = [
-            { id: 'piano', name: 'Piano', rows: 8 },
-            { id: 'drums', name: 'Drums', rows: 8 },
-            { id: 'bass', name: 'Bass', rows: 8 },
-            { id: 'synth', name: 'Synth', rows: 8 },
-            { id: 'guitar', name: 'Guitar', rows: 8 },
-            { id: 'strings', name: 'Strings', rows: 8 },
-            { id: 'brass', name: 'Brass', rows: 8 },
-            { id: 'percussion', name: 'Percussion', rows: 8 }
+            { id: 'piano', name: 'Piano', rows: 8, enabled: true },
+            { id: 'drums', name: 'Drums', rows: 8, enabled: true },
+            { id: 'bass', name: 'Bass', rows: 8, enabled: true },
+            { id: 'synth', name: 'Synth', rows: 8, enabled: true },
+            { id: 'guitar', name: 'Guitar', rows: 8, enabled: true },
+            { id: 'strings', name: 'Strings', rows: 8, enabled: true },
+            { id: 'brass', name: 'Brass', rows: 8, enabled: true },
+            { id: 'percussion', name: 'Percussion', rows: 8, enabled: true }
         ];
         
         this.init();
@@ -52,6 +53,7 @@ class AppleMusicLab {
         this.createSequencerGrid();
         this.createInstrumentButtons();
         this.updateTempoDisplay();
+        this.updateBarsDisplay();
     }
     
     createTimeline() {
@@ -70,7 +72,7 @@ class AppleMusicLab {
         const container = document.getElementById('instrumentLabels');
         container.innerHTML = '';
         
-        this.instruments.forEach(instrument => {
+        this.instruments.filter(instrument => instrument.enabled).forEach(instrument => {
             for (let i = 0; i < instrument.rows; i++) {
                 const label = document.createElement('div');
                 label.className = 'instrument-label';
@@ -86,7 +88,7 @@ class AppleMusicLab {
         const container = document.getElementById('sequencerGrid');
         container.innerHTML = '';
         
-        this.instruments.forEach(instrument => {
+        this.instruments.filter(instrument => instrument.enabled).forEach(instrument => {
             for (let rowIndex = 0; rowIndex < instrument.rows; rowIndex++) {
                 const row = document.createElement('div');
                 row.className = 'grid-row';
@@ -99,6 +101,13 @@ class AppleMusicLab {
                     cell.dataset.instrument = instrument.id;
                     cell.dataset.row = rowIndex;
                     cell.dataset.step = step;
+                    
+                    // Set active state based on sequence data
+                    if (this.sequence[instrument.id] && 
+                        this.sequence[instrument.id][rowIndex] && 
+                        this.sequence[instrument.id][rowIndex][step]) {
+                        cell.classList.add('active');
+                    }
                     
                     cell.addEventListener('click', () => {
                         this.toggleCell(instrument.id, rowIndex, step);
@@ -123,20 +132,47 @@ class AppleMusicLab {
         container.innerHTML = '';
         
         this.instruments.forEach(instrument => {
+            const instrumentItem = document.createElement('div');
+            instrumentItem.className = 'instrument-item';
+            
+            const toggle = document.createElement('input');
+            toggle.type = 'checkbox';
+            toggle.className = 'instrument-toggle';
+            toggle.checked = instrument.enabled;
+            toggle.addEventListener('change', (e) => {
+                instrument.enabled = e.target.checked;
+                this.setupUI(); // Rebuild UI when instrument is toggled
+                
+                // If the currently selected instrument is disabled, select another
+                if (!instrument.enabled && this.currentInstrument === instrument.id) {
+                    const firstEnabled = this.instruments.find(i => i.enabled);
+                    if (firstEnabled) {
+                        this.selectInstrument(firstEnabled.id);
+                    }
+                }
+            });
+            
             const button = document.createElement('button');
             button.className = `instrument-btn ${instrument.id}`;
             button.textContent = instrument.name;
             button.dataset.instrument = instrument.id;
             
             button.addEventListener('click', () => {
-                this.selectInstrument(instrument.id);
+                if (instrument.enabled) {
+                    this.selectInstrument(instrument.id);
+                }
             });
             
-            container.appendChild(button);
+            instrumentItem.appendChild(toggle);
+            instrumentItem.appendChild(button);
+            container.appendChild(instrumentItem);
         });
         
-        // Select first instrument by default
-        this.selectInstrument(this.instruments[0].id);
+        // Select first enabled instrument by default
+        const firstEnabled = this.instruments.find(i => i.enabled);
+        if (firstEnabled) {
+            this.selectInstrument(firstEnabled.id);
+        }
     }
     
     setupEventListeners() {
@@ -164,14 +200,44 @@ class AppleMusicLab {
             this.setVolume(parseInt(e.target.value));
         });
         
+        // Bars control
+        const barsSlider = document.getElementById('barsSlider');
+        barsSlider.addEventListener('input', (e) => {
+            this.setBars(parseInt(e.target.value));
+        });
+        
         // Dark mode toggle
         document.getElementById('darkModeToggle').addEventListener('click', () => {
             this.toggleDarkMode();
         });
         
-        // Download button
-        document.getElementById('downloadBtn').addEventListener('click', () => {
-            this.downloadSequence();
+        // Import button
+        document.getElementById('importBtn').addEventListener('click', () => {
+            document.getElementById('importFile').click();
+        });
+        
+        document.getElementById('importFile').addEventListener('change', (e) => {
+            this.importSequence(e.target.files[0]);
+        });
+        
+        // Download dropdown
+        document.getElementById('downloadBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDownloadMenu();
+        });
+        
+        // Download options
+        document.querySelectorAll('.download-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const format = e.target.dataset.format;
+                this.downloadSequence(format);
+                this.closeDownloadMenu();
+            });
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            this.closeDownloadMenu();
         });
         
         // Keyboard shortcuts
@@ -294,6 +360,38 @@ class AppleMusicLab {
         this.audioEngine.setVolume(volume);
     }
     
+    setBars(bars) {
+        this.bars = bars;
+        this.steps = bars * 4; // 4 steps per bar
+        this.updateBarsDisplay();
+        this.resizeSequence();
+        this.setupUI(); // Rebuild UI with new step count
+    }
+    
+    updateBarsDisplay() {
+        const barsValue = document.getElementById('barsValue');
+        const barsSlider = document.getElementById('barsSlider');
+        barsValue.textContent = barsSlider.value;
+    }
+    
+    resizeSequence() {
+        // Resize existing sequence data to match new step count
+        this.instruments.forEach(instrument => {
+            if (this.sequence[instrument.id]) {
+                this.sequence[instrument.id].forEach(row => {
+                    if (row.length < this.steps) {
+                        // Extend with false values
+                        const additionalSteps = this.steps - row.length;
+                        row.push(...new Array(additionalSteps).fill(false));
+                    } else if (row.length > this.steps) {
+                        // Truncate
+                        row.splice(this.steps);
+                    }
+                });
+            }
+        });
+    }
+    
     highlightCurrentStep(step) {
         // Clear previous highlights
         document.querySelectorAll('.grid-cell.playing').forEach(cell => {
@@ -343,40 +441,142 @@ class AppleMusicLab {
         }
     }
     
-    async downloadSequence() {
+    toggleDownloadMenu() {
+        const dropdown = document.querySelector('.download-dropdown');
+        dropdown.classList.toggle('open');
+    }
+    
+    closeDownloadMenu() {
+        const dropdown = document.querySelector('.download-dropdown');
+        dropdown.classList.remove('open');
+    }
+    
+    async downloadSequence(format = 'all') {
         try {
-            const exportData = this.audioEngine.exportSequence(this.sequence);
+            const timestamp = Date.now();
             
-            // Create JSON file
-            const jsonData = JSON.stringify(exportData, null, 2);
-            const jsonBlob = new Blob([jsonData], { type: 'application/json' });
-            const jsonUrl = URL.createObjectURL(jsonBlob);
+            if (format === 'json' || format === 'all') {
+                const exportData = this.audioEngine.exportSequence(this.sequence, this.steps);
+                // Add additional metadata
+                exportData.bars = this.bars;
+                exportData.enabledInstruments = this.instruments.filter(i => i.enabled).map(i => i.id);
+                
+                const jsonData = JSON.stringify(exportData, null, 2);
+                const jsonBlob = new Blob([jsonData], { type: 'application/json' });
+                const jsonUrl = URL.createObjectURL(jsonBlob);
+                
+                const jsonLink = document.createElement('a');
+                jsonLink.href = jsonUrl;
+                jsonLink.download = `apple-music-lab-${timestamp}.json`;
+                jsonLink.click();
+                
+                setTimeout(() => URL.revokeObjectURL(jsonUrl), 1000);
+            }
             
-            // Download JSON
-            const jsonLink = document.createElement('a');
-            jsonLink.href = jsonUrl;
-            jsonLink.download = `apple-music-lab-${Date.now()}.json`;
-            jsonLink.click();
-            
-            // Generate and download audio
-            const audioBuffer = await this.audioEngine.generateAudioBuffer(this.sequence);
-            const wavBlob = this.audioBufferToWav(audioBuffer);
-            const audioUrl = URL.createObjectURL(wavBlob);
-            
-            const audioLink = document.createElement('a');
-            audioLink.href = audioUrl;
-            audioLink.download = `apple-music-lab-${Date.now()}.wav`;
-            audioLink.click();
-            
-            // Cleanup
-            setTimeout(() => {
-                URL.revokeObjectURL(jsonUrl);
-                URL.revokeObjectURL(audioUrl);
-            }, 1000);
+            if (format === 'wav' || format === 'mp3' || format === 'all') {
+                const audioBuffer = await this.audioEngine.generateAudioBuffer(this.sequence, this.steps);
+                
+                if (format === 'wav' || format === 'all') {
+                    const wavBlob = this.audioBufferToWav(audioBuffer);
+                    const wavUrl = URL.createObjectURL(wavBlob);
+                    
+                    const wavLink = document.createElement('a');
+                    wavLink.href = wavUrl;
+                    wavLink.download = `apple-music-lab-${timestamp}.wav`;
+                    wavLink.click();
+                    
+                    setTimeout(() => URL.revokeObjectURL(wavUrl), 1000);
+                }
+                
+                if (format === 'mp3') {
+                    // For now, we'll download as WAV since MP3 encoding requires additional libraries
+                    // In a real implementation, you'd use a library like lamejs
+                    const wavBlob = this.audioBufferToWav(audioBuffer);
+                    const wavUrl = URL.createObjectURL(wavBlob);
+                    
+                    const mp3Link = document.createElement('a');
+                    mp3Link.href = wavUrl;
+                    mp3Link.download = `apple-music-lab-${timestamp}.wav`; // Note: still WAV for now
+                    mp3Link.click();
+                    
+                    setTimeout(() => URL.revokeObjectURL(wavUrl), 1000);
+                    
+                    // Show a note to user
+                    alert('Note: MP3 export is currently saved as WAV format. MP3 encoding will be added in a future update.');
+                }
+            }
             
         } catch (error) {
             console.error('Download failed:', error);
             alert('Download failed. Please try again.');
+        }
+    }
+    
+    async importSequence(file) {
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            
+            // Validate the imported data
+            if (!data.instruments || !data.tempo) {
+                throw new Error('Invalid file format');
+            }
+            
+            // Set tempo
+            this.audioEngine.setTempo(data.tempo);
+            document.getElementById('tempoSlider').value = data.tempo;
+            this.updateTempoDisplay();
+            
+            // Set bars if available
+            if (data.bars) {
+                this.bars = data.bars;
+                this.steps = this.bars * 4;
+                document.getElementById('barsSlider').value = this.bars;
+                this.updateBarsDisplay();
+            } else {
+                // Calculate bars from totalSteps
+                this.steps = data.totalSteps || 32;
+                this.bars = Math.ceil(this.steps / 4);
+                document.getElementById('barsSlider').value = this.bars;
+                this.updateBarsDisplay();
+            }
+            
+            // Enable/disable instruments if data is available
+            if (data.enabledInstruments) {
+                this.instruments.forEach(instrument => {
+                    instrument.enabled = data.enabledInstruments.includes(instrument.id);
+                });
+            }
+            
+            // Clear current sequence
+            this.initSequence();
+            
+            // Load sequence data
+            Object.keys(data.instruments).forEach(instrumentId => {
+                if (this.sequence[instrumentId]) {
+                    data.instruments[instrumentId].forEach(noteGroup => {
+                        const rowIndex = noteGroup.noteIndex;
+                        if (rowIndex < this.sequence[instrumentId].length) {
+                            noteGroup.notes.forEach(note => {
+                                if (note.step < this.steps) {
+                                    this.sequence[instrumentId][rowIndex][note.step] = true;
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // Rebuild UI
+            this.setupUI();
+            
+            alert('Sequence imported successfully!');
+            
+        } catch (error) {
+            console.error('Import failed:', error);
+            alert('Import failed. Please check the file format.');
         }
     }
     
